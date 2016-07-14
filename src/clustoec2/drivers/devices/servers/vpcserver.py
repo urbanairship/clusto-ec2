@@ -38,18 +38,14 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
         vpcconnman = clusto.get_by_name('vpcconnman')
         conn = vpcconnman._connection()
 
+        # Will fail with a 404 if instance_id is not found
         reservations = conn.get_all_instances([instance_id])
-
-        if not reservations:
-            err = "Failed to find instance with ID: '{}'".format(instance_id)
-            raise ValueError(err)
-
         instances = reservations[0].instances
 
-        if len(reservations) > 1 or len(instances) > 1:
+        if len(reservations) > 1 or len(reservations[0].instances) > 1:
             raise ValueError("Instance ID '{}' not unique".format(instance_id))
 
-        instance = instances[0]
+        instance = reservations[0].instances[0]
 
         if name:
             _name = name
