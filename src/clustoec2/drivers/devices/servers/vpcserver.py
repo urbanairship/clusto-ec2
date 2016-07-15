@@ -47,20 +47,15 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
 
         instance = reservations[0].instances[0]
 
-        if name:
-            _name = name
-        elif instance.tags.get('Name'):
-            _name = instance.tags.get('Name')
-        else:
-            #TODO allocate a name dynamically and set the Name tag
-            raise NotImplementedError
-
         # Instantiate
-        cls(_name)
-
-        # Get the instantiated instance
-        # FIXME: likely not the way to do this...
-        self = clusto.get_by_name(name)
+        if name:
+            cls(name)
+            self = clusto.get_by_name(name)
+        elif instance.tags.get('Name'):
+            cls(instance.tags.get('Name'))
+            self = clusto.get_by_name(instance.tags.get('Name'))
+        else:
+            self = clusto.get_by_name('ec2-names').allocate(cls)
 
         if not vpcconnman.resources(self):
             vpcconnman.allocate(self)
