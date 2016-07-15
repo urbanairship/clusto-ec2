@@ -51,11 +51,15 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
         if name:
             cls(name)
             self = clusto.get_by_name(name)
+            if instance.tags.get('Name') is None:
+                instance.add_tag('Name', name)
         elif instance.tags.get('Name'):
             cls(instance.tags.get('Name'))
             self = clusto.get_by_name(instance.tags.get('Name'))
         else:
             self = clusto.get_by_name('ec2-names').allocate(cls)
+            if instance.tags.get('Name') is None:
+                instance.add_tag('Name', self.name)
 
         if not vpcconnman.resources(self):
             vpcconnman.allocate(self)
