@@ -5,6 +5,8 @@
 #
 
 import clusto
+from clustoec2.drivers.locations.zones.subnet import VPCSubnet
+from clustoec2.drivers.categories.securitygroup import  EC2SecurityGroup
 from clustoec2.drivers.base import VPCMixin
 from clustoec2.drivers.devices.servers import ec2server
 
@@ -47,6 +49,12 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
 
         instance = reservations[0].instances[0]
 
+        # FIXME: don't fail if subnet doesn't exist
+        subnet = clusto.get_by_name(instance.subnet_id, VPCSubnet)
+
+        # FIXME: don't fail if security group doesn't exist
+        clusto_sg = [clusto.get_by_name(sg.id, EC2SecurityGroup) for sg in instance.groups]
+
         # Instantiate
         if name:
             cls(name)
@@ -79,16 +87,12 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
         if chef_role:
             self.set_attr(key=u'chef', subkey=u'role', value=chef_role)
 
-        # FIXME: don't fail if subnet doesn't exist
-        subnet = clusto.get_by_name(instance.subnet_id)
         if self not in subnet.contents():
             subnet.insert(self)
 
-        # FIXME: don't fail if security group doesn't exist
-        for sg in instance.groups:
-            clusto_sg = clusto.get_by_name(sg.id)
-            if self not in clusto_sg:
-                clusto_sg.insert(self)
+        for sg in clusto_sg:
+            if self not in sg.contents():
+                sg.insert(self)
 
         os = instance.tags.get('Operating System')
         if os and os.lower() == 'centos':
