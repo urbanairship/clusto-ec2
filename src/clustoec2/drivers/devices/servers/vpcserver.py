@@ -5,6 +5,7 @@
 #
 
 import clusto
+from uaext import EnvironmentPool
 from clustoec2.drivers.locations.zones.subnet import VPCSubnet
 from clustoec2.drivers.categories.securitygroup import  EC2SecurityGroup
 from clustoec2.drivers.base import VPCMixin
@@ -55,6 +56,12 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
         # FIXME: don't fail if security group doesn't exist
         clusto_sg = [clusto.get_by_name(sg.id, EC2SecurityGroup) for sg in instance.groups]
 
+        env_tag = instance.tags.get('Environment')
+        environment = None
+        if env_tag:
+            # FIXME: don't fail if security group doesn't exist
+            environment = clusto.get_by_name(env_tag, EnvironmentPool)
+
         # Instantiate
         if name:
             cls(name)
@@ -93,6 +100,9 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
         for sg in clusto_sg:
             if self not in sg.contents():
                 sg.insert(self)
+
+        if environment and self not in environment.contents():
+            environment.insert(self)
 
         os = instance.tags.get('Operating System')
         if os and os.lower() == 'centos':
