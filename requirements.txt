@@ -1,0 +1,5 @@
+IPy==0.81
+Mako==1.0.3
+boto==2.39.0
+clusto==0.8.62
+clusto-uaext
