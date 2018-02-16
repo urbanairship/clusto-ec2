@@ -50,16 +50,12 @@ class VPCVirtualServer(ec2server.EC2VirtualServer, VPCMixin):
 
         instance = reservations[0].instances[0]
 
-        # FIXME: don't fail if subnet doesn't exist
-        subnet = clusto.get_by_name(instance.subnet_id, VPCSubnet)
-
-        # FIXME: don't fail if security group doesn't exist
-        clusto_sg = [clusto.get_by_name(sg.id, EC2SecurityGroup) for sg in instance.groups]
+        subnet = clusto.get_or_create(instance.subnet_id, VPCSubnet)
+        clusto_sg = [clusto.get_or_create(sg.id, EC2SecurityGroup) for sg in instance.groups]
 
         env_tag = instance.tags.get('Environment')
         environment = None
         if env_tag:
-            # FIXME: don't fail if security group doesn't exist
             environment = clusto.get_by_name(env_tag, EnvironmentPool)
 
         # Instantiate
